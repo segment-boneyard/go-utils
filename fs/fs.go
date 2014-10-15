@@ -1,3 +1,7 @@
+//
+// Filesystem utilities, many of which are primarily useful for situations
+// where minimal bootstrapping is a win, such as tests.
+//
 package fs
 
 import "compress/gzip"
