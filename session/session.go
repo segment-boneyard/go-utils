@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -15,7 +16,8 @@ import (
 
 // A CredentialGetter is used to get valid (temporary) AWS credentials.
 type CredentialGetter struct {
-	Region string // Region to use; if unset, defaults to region in profile.
+	Region        string // Region to use; if unset, defaults to region in profile.
+	AssumeRoleTTL time.Duration
 }
 
 var DefaultCredentialGetter = &CredentialGetter{}
@@ -40,7 +42,11 @@ func (c *CredentialGetter) Get(realm string, in io.Reader) (*session.Session, er
 	// variables, so just print all of them and filter the ones we need.
 	//
 	// also TODO: figure out the right realm to use on everyone's machines.
-	cmd := exec.Command("aws-vault", "exec", realm, "env")
+	assumeRoleTTL := 15 * time.Minute
+	if c.AssumeRoleTTL != 0 {
+		assumeRoleTTL = c.AssumeRoleTTL
+	}
+	cmd := exec.Command("aws-vault", "exec", "--assume-role-ttl", assumeRoleTTL.String(), realm, "env")
 	if in == nil {
 		in = os.Stdin
 	}
